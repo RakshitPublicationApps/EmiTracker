@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>My EMI Tracker</title>
+<meta name="theme-color" content="#2457d6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="My EMIs">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="format-detection" content="telephone=no">
+<link rel="apple-touch-icon" id="ati" href="">
+<link rel="icon" id="ico" href="">
+<link rel="manifest" id="mf" href="">
+<style>
+:root{--bg:#f4f6fb;--card:#fff;--tx:#1b2333;--mut:#6b7488;--pri:#2457d6;--ok:#1a8f4c;--warn:#d98200;--bad:#d62839;--bd:#e1e5ee;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141d;--card:#1a2030;--tx:#eef1f8;--mut:#9aa4ba;--pri:#6c93ff;--ok:#3ccf7a;--warn:#ffb340;--bad:#ff6b78;--bd:#2a3248}}
+:root[data-theme="dark"]{--bg:#10141d;--card:#1a2030;--tx:#eef1f8;--mut:#9aa4ba;--pri:#6c93ff;--ok:#3ccf7a;--warn:#ffb340;--bad:#ff6b78;--bd:#2a3248}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:18px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:560px;margin:0 auto;padding:16px 14px 110px}
+h1{font-size:24px;margin:6px 0 14px}
+.sum{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.s{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:14px}
+.s small{display:block;color:var(--mut);font-size:14px}
+.s b{font-size:22px;display:block;margin-top:2px}
+.s.big{grid-column:1/-1;background:var(--pri);border:0;color:#fff}
+.s.big small{color:#dfe8ff}.s.big b{font-size:32px}
+h2{font-size:19px;margin:18px 2px 10px}
+.emi{background:var(--card);border:1px solid var(--bd);border-left:8px solid var(--ok);border-radius:16px;padding:14px;margin-bottom:12px}
+.emi.soon{border-left-color:var(--warn)}.emi.late{border-left-color:var(--bad)}.emi.done{border-left-color:var(--mut);opacity:.7}
+.top{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.nm{font-weight:700;font-size:20px}.bk{color:var(--mut);font-size:15px}
+.amt{font-weight:800;font-size:22px;white-space:nowrap}
+.due{margin:10px 0 4px;font-size:18px}
+.tag{display:inline-block;padding:3px 10px;border-radius:99px;font-size:14px;font-weight:700;color:#fff;background:var(--ok)}
+.soon .tag{background:var(--warn)}.late .tag{background:var(--bad)}.done .tag{background:var(--mut)}
+.bar{height:10px;background:var(--bd);border-radius:9px;overflow:hidden;margin:10px 0 4px}
+.bar i{display:block;height:100%;background:var(--pri)}
+.meta{color:var(--mut);font-size:15px}
+.row{display:flex;gap:8px;margin-top:12px}
+button{font:inherit;font-weight:700;border:0;border-radius:12px;padding:13px 14px;cursor:pointer;min-height:48px}
+.paid{flex:1;background:var(--ok);color:#fff}
+.sec{background:var(--bd);color:var(--tx)}
+.fab{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--pri);color:#fff;border-radius:99px;padding:16px 28px;font-size:19px;box-shadow:0 6px 20px rgba(0,0,0,.28)}
+.empty{text-align:center;color:var(--mut);padding:40px 10px}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:9}
+.ov.on{display:flex}
+.sheet{background:var(--card);width:100%;max-width:560px;border-radius:22px 22px 0 0;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px));max-height:92%;overflow:auto}
+label{display:block;font-weight:600;margin:12px 0 4px}
+input{width:100%;font:inherit;padding:13px;border:1.5px solid var(--bd);border-radius:12px;background:var(--bg);color:var(--tx)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.hint{font-size:13px;color:var(--mut);margin-top:3px}
+.tools{display:flex;gap:8px;margin-top:22px}
+.tools button{flex:1;font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>💰 My EMI Tracker</h1>
+  <div class="sum" id="sum"></div>
+  <h2 id="lh">My EMIs</h2>
+  <div id="list"></div>
+  <div class="tools" id="instRow"><button class="sec" style="font-size:17px" onclick="installApp()">📲 Install App on Phone</button></div>
+  <div class="tools"><button class="paid" onclick="share()">🔗 Share / Sync Link</button></div>
+  <div class="hint" style="margin-top:6px">Send this link on WhatsApp. When it is opened on another phone, all EMIs get copied there.</div>
+  <div class="tools" style="margin-top:12px"><button class="sec" onclick="exp()">⬇ Backup</button><button class="sec" onclick="document.getElementById('imp').click()">⬆ Restore</button><input type="file" id="imp" accept=".json" hidden></div>
+</div>
+<button class="fab" onclick="openForm()">＋ Add EMI</button>
+
+<div class="ov" id="ov"><div class="sheet">
+  <h2 id="ft" style="margin-top:0">Add EMI</h2>
+  <label>EMI Name</label><input id="n" placeholder="e.g. Home Loan, Bike, Phone">
+  <label>Bank / Lender</label><input id="b" placeholder="e.g. SBI, HDFC">
+  <div class="two">
+    <div><label>Monthly EMI (₹)</label><input id="a" type="number" inputmode="numeric" placeholder="12500"></div>
+    <div><label>Total EMIs</label><input id="t" type="number" inputmode="numeric" placeholder="24"></div>
+  </div>
+  <label>First EMI Date</label><input id="d" type="date">
+  <div class="hint">The date of the very first EMI. Same date repeats every month.</div>
+  <label>EMIs already paid</label><input id="p" type="number" inputmode="numeric" value="0">
+  <div class="row"><button class="sec" style="flex:1" onclick="closeForm()">Cancel</button><button class="paid" onclick="save()">Save</button></div>
+</div></div>
+
+<script>
+const KEY='emi_tracker_v1';let items=[],editId=null;
+try{items=JSON.parse(localStorage.getItem(KEY)||'[]')}catch(e){items=[]}
+const $=id=>document.getElementById(id);
+const inr=n=>'₹'+Math.round(n).toLocaleString('en-IN');
+const MN=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return{y,m:m-1,d}};
+function dueDate(e,k){const f=pd(e.first);const last=new Date(f.y,f.m+k+1,0).getDate();return new Date(f.y,f.m+k,Math.min(f.d,last))}
+const fd=d=>d.getDate()+' '+MN[d.getMonth()]+' '+d.getFullYear();
+function today(){const t=new Date();return new Date(t.getFullYear(),t.getMonth(),t.getDate())}
+function save_(){try{localStorage.setItem(KEY,JSON.stringify(items))}catch(e){}}
+function info(e){
+  const left=e.total-e.paid,done=left<=0,t=today();
+  const nd=done?null:dueDate(e,e.paid);
+  const days=done?null:Math.round((nd-t)/864e5);
+  let cls='',tag='';
+  if(done){cls='done';tag='✔ Completed'}
+  else if(days<0){cls='late';tag='⚠ Overdue by '+(-days)+' day'+(-days>1?'s':'')}
+  else if(days===0){cls='late';tag='Due TODAY'}
+  else if(days<=7){cls='soon';tag='Due in '+days+' day'+(days>1?'s':'')}
+  else tag='Due in '+days+' days';
+  return{left,done,nd,days,cls,tag,end:dueDate(e,e.total-1)};
+}
+function render(){
+  const act=items.filter(e=>!info(e).done);
+  const monthly=act.reduce((s,e)=>s+e.amount,0);
+  const remain=act.reduce((s,e)=>s+e.amount*(e.total-e.paid),0);
+  const t=today();
+  const thisM=act.filter(e=>{const n=info(e).nd;return n.getFullYear()===t.getFullYear()&&n.getMonth()===t.getMonth()||n<t});
+  const pend=thisM.reduce((s,e)=>s+e.amount,0);
+  const nxt=act.map(e=>({e,i:info(e)})).sort((a,b)=>a.i.nd-b.i.nd)[0];
+  $('sum').innerHTML=
+   `<div class="s big"><small>Total EMI every month</small><b>${inr(monthly)}</b></div>`+
+   `<div class="s"><small>Still to pay (all EMIs)</small><b>${inr(remain)}</b></div>`+
+   `<div class="s"><small>Pending this month</small><b>${inr(pend)}</b></div>`+
+   `<div class="s"><small>Running EMIs</small><b>${act.length}</b></div>`+
+   `<div class="s"><small>Next EMI</small><b style="font-size:18px">${nxt?nxt.e.name+'<br>'+fd(nxt.i.nd):'—'}</b></div>`;
+  const sorted=[...items].sort((a,b)=>{const x=info(a),y=info(b);if(x.done!==y.done)return x.done?1:-1;return x.done?0:x.nd-y.nd});
+  $('lh').style.display=items.length?'block':'none';
+  $('list').innerHTML=items.length?sorted.map(e=>{
+    const i=info(e),pct=Math.min(100,e.paid/e.total*100);
+    return `<div class="emi ${i.cls}">
+     <div class="top"><div><div class="nm">${esc(e.name)}</div><div class="bk">${esc(e.bank||'')}</div></div><div class="amt">${inr(e.amount)}</div></div>
+     <div class="due">${i.done?'':'📅 <b>'+fd(i.nd)+'</b><br>'}<span class="tag">${i.tag}</span></div>
+     <div class="bar"><i style="width:${pct}%"></i></div>
+     <div class="meta">${e.paid} of ${e.total} paid · ${i.left>0?i.left+' left · '+inr(i.left*e.amount)+' remaining':'All paid'}<br>Ends: ${fd(i.end)}</div>
+     <div class="row">${i.done?'':`<button class="paid" onclick="pay('${e.id}',1)">✔ Mark as Paid</button>`}
+      ${e.paid>0?`<button class="sec" onclick="pay('${e.id}',-1)">Undo</button>`:''}
+      <button class="sec" onclick="openForm('${e.id}')">Edit</button></div>
+    </div>`}).join(''):'<div class="empty">No EMIs yet.<br>Tap <b>＋ Add EMI</b> to begin.</div>';
+}
+function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function pay(id,v){
+  const e=items.find(x=>x.id===id);if(!e)return;
+  if(v>0&&!confirm('Mark '+e.name+' EMI as paid?'))return;
+  e.paid=Math.max(0,Math.min(e.total,e.paid+v));save_();render();
+}
+function openForm(id){
+  editId=id||null;const e=items.find(x=>x.id===id)||{name:'',bank:'',amount:'',total:'',first:'',paid:0};
+  $('ft').textContent=id?'Edit EMI':'Add EMI';
+  $('n').value=e.name;$('b').value=e.bank;$('a').value=e.amount;$('t').value=e.total;$('d').value=e.first;$('p').value=e.paid;
+  if(id&&!$('del')){const b=document.createElement('button');b.id='del';b.className='sec';b.style.cssText='width:100%;margin-top:10px;color:var(--bad)';b.textContent='🗑 Delete this EMI';b.onclick=del;$('p').parentNode.appendChild(b)}
+  if(!id&&$('del'))$('del').remove();
+  $('ov').classList.add('on');
+}
+function closeForm(){$('ov').classList.remove('on')}
+function del(){if(confirm('Delete this EMI permanently?')){items=items.filter(x=>x.id!==editId);save_();closeForm();render()}}
+function save(){
+  const o={name:$('n').value.trim(),bank:$('b').value.trim(),amount:+$('a').value,total:+$('t').value,first:$('d').value,paid:+$('p').value||0};
+  if(!o.name||!(o.amount>0)||!(o.total>0)||!o.first){alert('Please fill Name, EMI amount, Total EMIs and First EMI date.');return}
+  o.paid=Math.max(0,Math.min(o.total,Math.floor(o.paid)));
+  if(editId){Object.assign(items.find(x=>x.id===editId),o)}else{o.id=Date.now().toString(36);items.push(o)}
+  save_();closeForm();render();
+}
+function exp(){
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(items)],{type:'application/json'}));
+  a.download='emi-backup.json';a.click();
+}
+$('imp').onchange=e=>{
+  const f=e.target.files[0];if(!f)return;const r=new FileReader();
+  r.onload=()=>{try{const d=JSON.parse(r.result);if(Array.isArray(d)&&confirm('Replace current data with backup?')){items=d;save_();render()}}catch(x){alert('Invalid backup file')}};
+  r.readAsText(f);
+};
+$('ov').onclick=e=>{if(e.target===$('ov'))closeForm()};
+const enc=o=>btoa(unescape(encodeURIComponent(JSON.stringify(o)))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+const dec=s=>{s=s.replace(/-/g,'+').replace(/_/g,'/');while(s.length%4)s+='=';return JSON.parse(decodeURIComponent(escape(atob(s))))};
+async function share(){
+  if(!items.length){alert('Add at least one EMI first.');return}
+  const base=location.href.split('#')[0];
+  const link=base+'#data='+enc(items);
+  if(navigator.share){try{await navigator.share({title:'My EMI Tracker',text:'Open this link to get my EMI data',url:link});return}catch(e){if(e.name==='AbortError')return}}
+  try{await navigator.clipboard.writeText(link);alert('Link copied! Paste it in WhatsApp or anywhere to share.')}
+  catch(e){prompt('Copy this link and send it:',link)}
+}
+function checkLink(){
+  const m=location.hash.match(/^#data=(.+)$/);if(!m)return;
+  try{
+    const d=dec(m[1]);
+    if(Array.isArray(d)&&d.length){
+      if(confirm('A shared link has '+d.length+' EMI(s).\n\nOK = Load them (replaces data on this phone)\nCancel = Ignore')){items=d;save_()}
+    }
+  }catch(e){alert('This link is not valid.')}
+  try{history.replaceState(null,'',location.href.split('#')[0])}catch(e){}
+}
+/* ---- App icon + install support ---- */
+let deferred=null;
+function makeIcon(sz){
+  const c=document.createElement('canvas');c.width=c.height=sz;const x=c.getContext('2d');
+  const g=x.createLinearGradient(0,0,sz,sz);g.addColorStop(0,'#3b6fe8');g.addColorStop(1,'#1a3fa8');
+  x.fillStyle=g;x.fillRect(0,0,sz,sz);
+  x.fillStyle='rgba(255,255,255,.16)';x.beginPath();x.arc(sz*.8,sz*.2,sz*.32,0,7);x.fill();
+  x.fillStyle='#fff';x.textAlign='center';x.textBaseline='middle';
+  x.font='bold '+sz*.52+'px system-ui,sans-serif';x.fillText('₹',sz/2,sz*.46);
+  x.font='bold '+sz*.12+'px system-ui,sans-serif';x.fillText('EMI',sz/2,sz*.79);
+  return c.toDataURL('image/png');
+}
+try{
+  const i192=makeIcon(192),i512=makeIcon(512),i180=makeIcon(180);
+  $('ati').href=i180;$('ico').href=i192;
+  const mf={name:'My EMI Tracker',short_name:'My EMIs',start_url:location.href.split('#')[0],scope:location.href.split('#')[0],display:'standalone',orientation:'portrait',background_color:'#f4f6fb',theme_color:'#2457d6',icons:[{src:i192,sizes:'192x192',type:'image/png',purpose:'any'},{src:i512,sizes:'512x512',type:'image/png',purpose:'any'},{src:i512,sizes:'512x512',type:'image/png',purpose:'maskable'}]};
+  $('mf').href=URL.createObjectURL(new Blob([JSON.stringify(mf)],{type:'application/manifest+json'}));
+}catch(e){}
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e});
+addEventListener('appinstalled',()=>{$('instRow').style.display='none'});
+if(matchMedia('(display-mode: standalone)').matches||navigator.standalone)$('instRow').style.display='none';
+async function installApp(){
+  if(deferred){deferred.prompt();await deferred.userChoice;deferred=null;return}
+  const ios=/iphone|ipad|ipod/i.test(navigator.userAgent);
+  alert(ios
+   ?'To install on iPhone:\n\n1. Open this page in Safari\n2. Tap the Share button (square with arrow)\n3. Tap "Add to Home Screen"\n4. Tap Add'
+   :'To install on Android:\n\n1. Open this page in Chrome\n2. Tap the ⋮ menu (top right)\n3. Tap "Install app" or "Add to Home screen"\n4. Tap Install');
+}
+checkLink();
+render();
+</script>
+</body>
+</html>
